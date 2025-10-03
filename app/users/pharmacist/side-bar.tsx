@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   BarChart3,
   Bell,
@@ -22,8 +22,14 @@ import {
   Warehouse,
   type LucideIcon,
   Receipt,
+  Pill,
+  ClipboardList,
+  AlertTriangle,
+  Activity,
+  TrendingUp,
+  Calendar,
+  Clock
 } from "lucide-react"
-
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
@@ -41,15 +47,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import fetchData from "@/hooks/fetch-data"
-import { NavbarItem } from "@heroui/navbar"
 import { Button } from "@heroui/button"
 import { signOut, useSession } from "next-auth/react"
-import { getWareHouseId } from "@/hooks/get-werehouseId"
 import { SystemStatus } from "@/components/system-status"
 
-
-// Navigation data for inventory management system
-
+// Navigation data for pharmacist system
 function NavSection({
   title,
   items,
@@ -66,8 +68,6 @@ function NavSection({
     }>
   }>
 }) {
-
-  
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
@@ -97,7 +97,6 @@ function NavSection({
                         </SidebarMenuSubItem>
                       ))}
                     </SidebarMenuSub>
-                    
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
@@ -113,7 +112,6 @@ function NavSection({
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
           )
         })}
       </SidebarMenu>
@@ -121,82 +119,121 @@ function NavSection({
   )
 }
 
-export function WarehouseAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  
-  const {data,loading,error} = fetchData("/api/settings")
-  const warehouseId = getWareHouseId()
-  const {data:session} = useSession()
-  const [endpoint,setEndPoint] = useState("")
+export function PharmacistAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: settingsData, loading, error } = fetchData("/api/settings")
+  const { data: session } = useSession()
 
+  if (loading) return ""
 
-  useEffect(()=>{
-    setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)
-  },[session,warehouseId])
-
-  
-
-  
-  if(loading) return ""
-
-  // const isOnline = useConnectionCheck()
- 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
+              <a href="/users/pharmacist/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Package className="size-4" />
+                  <Pill className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{data?.companyName}</span>
-                  <span className="truncate text-xs">Sales Management System</span>
-                  {/* {isOnline ? "online" : "ofline"} */}
+                  <span className="truncate font-semibold">{settingsData?.companyName || "Clinic"}</span>
+                  <span className="truncate text-xs">Pharmacy Management</span>
                 </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SystemStatus/>
+          <SystemStatus />
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavSection title="Overview" items={[
-                {
-                  title: "Dashboard",
-                  url: `${endpoint}/dashboard`,
-                  icon: Home,
-                },
-              ]} />
-        <NavSection title="Inventory" items={[
-    {
-      title: "Sales",
-      icon: ShoppingCart,
-      items: [
-        {
-          title: "Add Sale",
-          url: `${endpoint}/sales/add`,
-          icon: Plus,
-        },
-        {
-          title: "View Sales",
-          url: `${endpoint}/sales/list`,
-          icon: Eye,
-        },
-      ],
-    },
-   
-  ]} />
-       
+          {
+            title: "Dashboard",
+            url: "/users/pharmacist/dashboard",
+            icon: Home,
+          },
+        ]} />
 
-        
+        <NavSection title="Dispensary" items={[
+          {
+            title: "Prescriptions",
+            icon: ClipboardList,
+            items: [
+              {
+                title: "Pending",
+                url: "/users/pharmacist/dispensary/pending",
+                icon: Clock,
+              },
+              {
+                title: "Dispensing History",
+                url: "/users/pharmacist/dispensary/history",
+                icon: FileText,
+              },
+            ],
+          },
+        ]} />
+
+        <NavSection title="Inventory" items={[
+          {
+            title: "Stock Management",
+            icon: Package,
+            items: [
+              {
+                title: "Stock Levels",
+                url: "/users/pharmacist/inventory/stock",
+                icon: Package,
+              },
+              {
+                title: "Low Stock Alerts",
+                url: "/users/pharmacist/inventory/alerts",
+                icon: AlertTriangle,
+              },
+              {
+                title: "Expiring Drugs",
+                url: "/users/pharmacist/inventory/expiring",
+                icon: Calendar,
+              },
+            ],
+          },
+        ]} />
+
+        <NavSection title="Reports" items={[
+          {
+            title: "Analytics",
+            icon: BarChart3,
+            items: [
+              {
+                title: "Daily Sales",
+                url: "/users/pharmacist/reports/daily",
+                icon: TrendingUp,
+              },
+              {
+                title: "Drug Usage",
+                url: "/users/pharmacist/reports/usage",
+                icon: Activity,
+              },
+              {
+                title: "Student History",
+                url: "/users/pharmacist/reports/students",
+                icon: Users,
+              },
+            ],
+          },
+        ]} />
+
+        <NavSection title="Settings" items={[
+          {
+            title: "Preferences",
+            url: "/users/pharmacist/settings",
+            icon: Settings,
+          },
+        ]} />
 
         <SidebarMenu>
           <SidebarMenuItem>
-          <SidebarMenuButton
+            <SidebarMenuButton
               tooltip="Logout"
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: "/user/login" })}
               className="bg-red-500 text-white hover:bg-red-600 transition"
             >
               <ArrowLeftRight className="mr-2 h-4 w-4" />
@@ -204,9 +241,6 @@ export function WarehouseAppSidebar({ ...props }: React.ComponentProps<typeof Si
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-
-        <Button onClick={()=>signOut()} style={{display:"none"}} className="bg-red-500">Logout</Button>
-
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
