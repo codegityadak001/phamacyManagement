@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/oflinePrisma";
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const { warehouseId } = await req.json();
-    
-    if (!warehouseId) {
-      return NextResponse.json({ success: false, message: 'Warehouse ID is required' }, { status: 400 });
-    }
-
     const drugs = await prisma.drug.findMany({
       where: {
-        warehouseId,
         isDeleted: false
       },
       orderBy: {

@@ -49,6 +49,7 @@ import { Loading } from "@/components/loading"
 import { formatCurrency } from "@/lib/utils"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import fetchData from "@/hooks/fetch-data"
 
 interface Drug {
   id: string
@@ -76,7 +77,7 @@ export default function DrugInventoryPage() {
   const [endpoint, setEndPoint] = useState("")
   const { data: session } = useSession()
 
-  const { data: drugsData, loading, error, refetch } = fetchWareHouseData("/api/drugs/list")
+  const { data: drugsData, loading, error, refetch } = fetchData("/api/drugs/list")
 
   useEffect(() => {
     setEndPoint(`/warehouse/${session?.user?.role}`)

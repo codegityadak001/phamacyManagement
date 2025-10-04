@@ -1,8 +1,6 @@
-import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient()
+import prisma from "@/lib/oflinePrisma";
 
 
 export async function POST(req:NextRequest){

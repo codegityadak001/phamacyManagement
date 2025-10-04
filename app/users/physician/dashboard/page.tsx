@@ -84,98 +84,43 @@ export default function PhysicianDashboard() {
       try {
         setLoading(true)
         
-        // Mock data for demonstration - replace with actual API call
-        const mockData: PhysicianDashboardData = {
-          todayStats: {
-            patientsCompleted: 15,
-            consultationsCompleted: 12,
-            prescriptionsWritten: 14,
-            inQueue: 3
-          },
-          currentQueue: [
-            {
-              id: "1",
-              studentName: "John Doe",
-              matricNumber: "CSC/2020/001",
-              priority: "emergency",
-              complaint: "Severe chest pain",
-              waitTime: "5 mins"
-            },
-            {
-              id: "2",
-              studentName: "Jane Smith",
-              matricNumber: "ENG/2021/045",
-              priority: "urgent",
-              complaint: "High fever",
-              waitTime: "12 mins"
-            },
-            {
-              id: "3",
-              studentName: "Mike Wilson",
-              matricNumber: "MED/2019/078",
-              priority: "normal",
-              complaint: "Routine checkup",
-              waitTime: "25 mins"
-            }
-          ],
-          todayAppointments: [
-            {
-              id: "1",
-              time: "10:00 AM",
-              studentName: "Sarah Johnson",
-              type: "Follow-up",
-              status: "scheduled"
-            },
-            {
-              id: "2",
-              time: "11:30 AM",
-              studentName: "David Brown",
-              type: "New consultation",
-              status: "scheduled"
-            },
-            {
-              id: "3",
-              time: "2:00 PM",
-              studentName: "Lisa Garcia",
-              type: "Lab results review",
-              status: "scheduled"
-            }
-          ],
-          weekOverview: {
-            totalConsultations: 45,
-            mostCommonDiagnosis: "Malaria",
-            diagnosisCount: 12,
-            avgConsultationTime: 15
-          },
-          consultationsByDay: [
-            { day: "Mon", consultations: 8 },
-            { day: "Tue", consultations: 12 },
-            { day: "Wed", consultations: 6 },
-            { day: "Thu", consultations: 10 },
-            { day: "Fri", consultations: 9 },
-          ],
-          diagnosisDistribution: [
-            { diagnosis: "Malaria", count: 12, color: "#FF6B6B" },
-            { diagnosis: "Headache", count: 8, color: "#4ECDC4" },
-            { diagnosis: "Fever", count: 6, color: "#45B7D1" },
-            { diagnosis: "Cough", count: 5, color: "#96CEB4" },
-            { diagnosis: "Others", count: 14, color: "#FFEAA7" }
-          ]
-        }
-
         const response = await axios.get("/api/physician/dashboard")
-
-        console.log(response)
-        
         setData(response.data)
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
+        // Set empty data structure on error
+        setData({
+          todayStats: {
+            patientsCompleted: 0,
+            consultationsCompleted: 0,
+            prescriptionsWritten: 0,
+            inQueue: 0
+          },
+          currentQueue: [],
+          todayAppointments: [],
+          weekOverview: {
+            totalConsultations: 0,
+            mostCommonDiagnosis: "N/A",
+            diagnosisCount: 0,
+            avgConsultationTime: 0
+          },
+          consultationsByDay: [
+            { day: "Mon", consultations: 0 },
+            { day: "Tue", consultations: 0 },
+            { day: "Wed", consultations: 0 },
+            { day: "Thu", consultations: 0 },
+            { day: "Fri", consultations: 0 },
+          ],
+          diagnosisDistribution: []
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    fetchDashboardData()
+    if (session?.user) {
+      fetchDashboardData()
+    }
   }, [session])
 
   const handleCallNextPatient = () => {
