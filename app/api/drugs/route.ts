@@ -2,13 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/oflinePrisma";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const warehouseId = searchParams.get('warehouseId');
-  
   try {
     const drugs = await prisma.drug.findMany({
       where: {
-        warehouseId,
         isDeleted: false
       },
       orderBy: {
@@ -46,24 +42,13 @@ export async function POST(req: NextRequest) {
       unit,
       storageConditions,
       prescriptionRequired,
-      warehouseId,
       createdBy
     } = data;
 
-    // Check if warehouse exists
-    const warehouse = await prisma.warehouses.findUnique({
-      where: { warehouseCode: warehouseId, isDeleted: false }
-    });
-
-    if (!warehouse) {
-      return NextResponse.json({ success: false, message: 'Warehouse does not exist' }, { status: 404 });
-    }
-
-    // Check if drug code already exists in this warehouse
+    // Check if drug code already exists
     const existingDrug = await prisma.drug.findFirst({
       where: {
         code,
-        warehouseId,
         isDeleted: false
       }
     });
@@ -92,7 +77,6 @@ export async function POST(req: NextRequest) {
         unit: unit || 'Pieces',
         storageConditions,
         prescriptionRequired: prescriptionRequired || false,
-        warehouseId,
         createdBy,
         sync: false,
         syncedAt: null
@@ -129,8 +113,7 @@ export async function PUT(req: NextRequest) {
       batchNumber,
       unit,
       storageConditions,
-      prescriptionRequired,
-      warehouseId
+      prescriptionRequired
     } = data;
 
     // Check if drug exists
@@ -147,7 +130,6 @@ export async function PUT(req: NextRequest) {
       const codeConflict = await prisma.drug.findFirst({
         where: {
           code,
-          warehouseId,
           isDeleted: false,
           id: { not: drugId }
         }

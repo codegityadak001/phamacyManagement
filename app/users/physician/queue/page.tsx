@@ -70,81 +70,39 @@ export default function QueuePage() {
       if (showRefreshing) setRefreshing(true)
       else setLoading(true)
 
-      // Mock API call - replace with actual API
-      const mockQueue: QueueItem[] = [
-        {
-          id: "1",
-          queueNumber: 1,
-          patient: {
-            id: "1",
-            name: "John Doe",
-            matricNumber: "CSC/2020/001",
-            age: 22,
-            gender: "Male",
-            phone: "08012345678",
-            department: "Computer Science",
-            level: "400"
-          },
-          priority: "emergency",
-          status: "waiting",
-          complaint: "Severe chest pain",
-          checkInTime: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-          waitTime: "5 mins"
-        },
-        {
-          id: "2",
-          queueNumber: 2,
-          patient: {
-            id: "2",
-            name: "Jane Smith",
-            matricNumber: "ENG/2021/045",
-            age: 21,
-            gender: "Female",
-            phone: "08087654321",
-            department: "Electrical Engineering",
-            level: "300"
-          },
-          priority: "urgent",
-          status: "waiting",
-          complaint: "High fever",
-          checkInTime: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-          waitTime: "12 mins"
-        },
-        {
-          id: "3",
-          queueNumber: 3,
-          patient: {
-            id: "3",
-            name: "Mike Wilson",
-            matricNumber: "MED/2019/078",
-            age: 23,
-            gender: "Male",
-            department: "Medicine",
-            level: "500"
-          },
-          priority: "normal",
-          status: "waiting",
-          complaint: "Routine checkup",
-          checkInTime: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-          waitTime: "25 mins"
-        }
-      ]
-
-      const mockStats: QueueStats = {
-        waiting: 3,
-        called: 0,
-        in_consultation: 1,
-        completed: 8,
-        total: 12
+      const response = await fetch('/api/physician/queue')
+      const data = await response.json()
+      
+      if (response.ok) {
+        const filteredQueue = data.queue.filter((item: QueueItem) => 
+          selectedStatus === 'all' || item.status === selectedStatus
+        )
+        setQueue(filteredQueue)
+        setStats(data.stats)
+      } else {
+        console.error("Failed to fetch queue:", data.error)
+        // Set empty data on error
+        setQueue([])
+        setStats({
+          waiting: 0,
+          called: 0,
+          in_consultation: 0,
+          completed: 0,
+          total: 0
+        })
       }
-
-      setQueue(mockQueue.filter(item => 
-        selectedStatus === 'all' || item.status === selectedStatus
-      ))
-      setStats(mockStats)
 
     } catch (error) {
       console.error("Failed to fetch queue:", error)
+      // Set empty data on error
+      setQueue([])
+      setStats({
+        waiting: 0,
+        called: 0,
+        in_consultation: 0,
+        completed: 0,
+        total: 0
+      })
     } finally {
       setLoading(false)
       setRefreshing(false)

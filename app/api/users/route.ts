@@ -1,22 +1,20 @@
-import { PrismaClient as Online } from "@/prisma/generated/online";
-import { PrismaClient as Offline } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import prisma from "@/lib/oflinePrisma";
+import onlinePrisma from "@/lib/onlinePrisma";
 
-const prisma = new Online()
-
-const prismaOfline = new Offline()
+const prismaOfline = prisma;
 
 export async function POST(req:NextRequest){
     const data = await req.json()
     const {username:userName,email,password,role,phone:phoneNumber,warehouse} = data.formData
     try {
-        const existUser = await prisma.users_online.findUnique({where:{userName,isDeleted:false}})
+        const existUser = await onlinePrisma.users.findUnique({where:{userName,isDeleted:false}})
 
         if(existUser) return NextResponse.json("userNameExist",{status:401})
 
         const hash = await bcrypt.hash(password,10)
-        const user = await prisma.users_online.create({
+        const user = await onlinePrisma.users.create({
             data:{
                 userName,email,password:hash,role,phoneNumber,warehouses_onlineId:warehouse
             }

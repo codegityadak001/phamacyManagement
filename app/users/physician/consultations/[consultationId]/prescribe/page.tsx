@@ -73,47 +73,7 @@ interface ConsultationData {
   createdAt: string
 }
 
-const mockDrugs: Drug[] = [
-  {
-    id: "1",
-    name: "Artemether-Lumefantrine (AL)",
-    genericName: "Artemether-Lumefantrine",
-    brandName: "Coartem",
-    category: "Antimalarial",
-    manufacturer: "Novartis",
-    strength: "80mg/480mg",
-    dosageForm: "Tablet",
-    unitPrice: 50,
-    availableStock: 250,
-    requiresPrescription: true
-  },
-  {
-    id: "2",
-    name: "Paracetamol",
-    genericName: "Acetaminophen",
-    brandName: "Panadol",
-    category: "Analgesic/Antipyretic",
-    manufacturer: "GSK",
-    strength: "500mg",
-    dosageForm: "Tablet",
-    unitPrice: 5,
-    availableStock: 500,
-    requiresPrescription: false
-  },
-  {
-    id: "3",
-    name: "Amoxicillin",
-    genericName: "Amoxicillin",
-    brandName: "Augmentin",
-    category: "Antibiotic",
-    manufacturer: "GSK",
-    strength: "500mg",
-    dosageForm: "Capsule",
-    unitPrice: 25,
-    availableStock: 150,
-    requiresPrescription: true
-  }
-]
+// Drugs will be fetched from API
 
 const frequencies = [
   "Once daily (OD)",
@@ -165,6 +125,7 @@ export default function PrescribePage() {
   const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Drug[]>([])
+  const [allDrugs, setAllDrugs] = useState<Drug[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [generalInstructions, setGeneralInstructions] = useState("")
   const [priority, setPriority] = useState<"normal" | "urgent" | "emergency">("urgent")
@@ -172,24 +133,38 @@ export default function PrescribePage() {
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    // Mock consultation data
-    const mockConsultation: ConsultationData = {
-      id: consultationId,
-      consultationNo: "CONS-2025-001",
-      patient: {
-        id: "1",
-        name: "John Doe",
-        matricNumber: "CSC/2020/001",
-        age: 22,
-        gender: "Male"
-      },
-      diagnosis: "Malaria",
-      createdAt: new Date().toISOString()
+    const fetchConsultation = async () => {
+      try {
+        const response = await fetch(`/api/physician/consultations/${consultationId}`)
+        const data = await response.json()
+        
+        if (response.ok) {
+          setConsultation(data)
+        } else {
+          console.error("Failed to fetch consultation:", data.error)
+        }
+      } catch (error) {
+        console.error("Failed to fetch consultation:", error)
+      }
     }
-    setConsultation(mockConsultation)
 
-    // Set default general instructions
-    setGeneralInstructions("Complete the full course of antimalarial drugs even if you feel better. Return immediately if symptoms worsen or new symptoms develop.")
+    const fetchDrugs = async () => {
+      try {
+        const response = await fetch('/api/drugs/list')
+        const data = await response.json()
+        
+        if (response.ok) {
+          setAllDrugs(data)
+        } else {
+          console.error("Failed to fetch drugs:", data.error)
+        }
+      } catch (error) {
+        console.error("Failed to fetch drugs:", error)
+      }
+    }
+
+    fetchConsultation()
+    fetchDrugs()
   }, [consultationId])
 
   const searchDrugs = (query: string) => {
@@ -198,7 +173,7 @@ export default function PrescribePage() {
       return
     }
 
-    const filtered = mockDrugs.filter(drug =>
+    const filtered = allDrugs.filter(drug =>
       drug.name.toLowerCase().includes(query.toLowerCase()) ||
       drug.genericName?.toLowerCase().includes(query.toLowerCase()) ||
       drug.brandName?.toLowerCase().includes(query.toLowerCase()) ||
@@ -275,16 +250,44 @@ export default function PrescribePage() {
   }
 
   const getDrugByName = (drugName: string) => {
-    return mockDrugs.find(drug => drug.name === drugName)
+    return allDrugs.find(drug => drug.name === drugName)
   }
 
   const handleSaveDraft = async () => {
     setIsSaving(true)
-    // Mock save draft
-    setTimeout(() => {
+    
+    try {
+      const prescriptionData = {
+        consultationId,
+        prescriptionItems,
+        generalInstructions,
+        priority,
+        validUntil,
+        totalCost: getTotalCost(),
+        status: 'draft'
+      }
+
+      const response = await fetch('/api/physician/prescriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(prescriptionData)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert("Prescription draft saved successfully!")
+      } else {
+        alert(`Failed to save draft: ${data.error}`)
+      }
+    } catch (error) {
+      console.error("Failed to save draft:", error)
+      alert("Failed to save draft")
+    } finally {
       setIsSaving(false)
-      alert("Prescription draft saved successfully!")
-    }, 1000)
+    }
   }
 
   const handleSubmitToPharmacy = async () => {
@@ -304,21 +307,39 @@ export default function PrescribePage() {
 
     setIsSaving(true)
     
-    const prescriptionData = {
-      consultationId,
-      prescriptionItems,
-      generalInstructions,
-      priority,
-      validUntil,
-      totalCost: getTotalCost()
-    }
+    try {
+      const prescriptionData = {
+        consultationId,
+        prescriptionItems,
+        generalInstructions,
+        priority,
+        validUntil,
+        totalCost: getTotalCost(),
+        status: 'pending'
+      }
 
-    // Mock API call
-    setTimeout(() => {
+      const response = await fetch('/api/physician/prescriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(prescriptionData)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert("Prescription submitted to pharmacy successfully!")
+        router.push("/users/physician/dashboard")
+      } else {
+        alert(`Failed to submit prescription: ${data.error}`)
+      }
+    } catch (error) {
+      console.error("Failed to submit prescription:", error)
+      alert("Failed to submit prescription")
+    } finally {
       setIsSaving(false)
-      alert("Prescription submitted to pharmacy successfully!")
-      router.push("/users/physician/dashboard")
-    }, 1500)
+    }
   }
 
   const handlePreview = () => {

@@ -86,120 +86,52 @@ export default function PatientSearchPage() {
 
     setIsSearching(true)
     
-    // Mock search results - replace with actual API call
-    const mockPatients: Patient[] = [
-      {
-        id: "1",
-        matricNumber: "CSC/2020/001",
-        firstName: "John",
-        lastName: "Doe",
-        age: 22,
-        gender: "Male",
-        bloodGroup: "O+",
-        genotype: "AA",
-        allergies: "Penicillin",
-        chronicConditions: "Asthma",
-        phone: "08012345678",
-        department: "Computer Science",
-        level: "400",
-        faculty: "Science",
-        emergencyContact: "Jane Doe",
-        emergencyPhone: "08087654321"
-      },
-      {
-        id: "2",
-        matricNumber: "ENG/2021/045",
-        firstName: "Jane",
-        lastName: "Smith",
-        age: 21,
-        gender: "Female",
-        bloodGroup: "A+",
-        genotype: "AS",
-        phone: "08098765432",
-        department: "Electrical Engineering",
-        level: "300",
-        faculty: "Engineering",
-        emergencyContact: "John Smith",
-        emergencyPhone: "08076543210"
-      },
-      {
-        id: "3",
-        matricNumber: "MED/2019/078",
-        firstName: "Mike",
-        lastName: "Wilson",
-        age: 23,
-        gender: "Male",
-        bloodGroup: "B+",
-        genotype: "AA",
-        department: "Medicine",
-        level: "500",
-        faculty: "Medicine",
-        emergencyContact: "Sarah Wilson",
-        emergencyPhone: "08065432109"
+    try {
+      const response = await fetch(`/api/physician/patients/search?q=${encodeURIComponent(query)}`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setSearchResults(data.patients || [])
+      } else {
+        console.error("Failed to search patients:", data.error)
+        setSearchResults([])
       }
-    ]
-
-    // Simulate API delay
-    setTimeout(() => {
-      const filtered = mockPatients.filter(patient => 
-        patient.matricNumber.toLowerCase().includes(query.toLowerCase()) ||
-        `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-        patient.department.toLowerCase().includes(query.toLowerCase())
-      )
-      setSearchResults(filtered)
+    } catch (error) {
+      console.error("Failed to search patients:", error)
+      setSearchResults([])
+    } finally {
       setIsSearching(false)
-    }, 500)
+    }
   }
 
   const loadPatientHistory = async (patientId: string) => {
     setIsLoadingHistory(true)
     
-    // Mock patient history - replace with actual API call
-    const mockHistory: PatientHistory = {
-      consultations: [
-        {
-          id: "1",
-          consultationNo: "CONS-2024-001",
-          date: "2024-09-20",
-          diagnosis: "Malaria",
-          physician: "Dr. Smith",
-          status: "completed"
-        },
-        {
-          id: "2",
-          consultationNo: "CONS-2024-002",
-          date: "2024-08-15",
-          diagnosis: "Headache",
-          physician: "Dr. Johnson",
-          status: "completed"
-        }
-      ],
-      prescriptions: [
-        {
-          id: "1",
-          prescriptionNo: "RX-2024-001",
-          date: "2024-09-20",
-          diagnosis: "Malaria",
-          status: "dispensed",
-          itemCount: 3
-        }
-      ],
-      vitalSigns: [
-        {
-          id: "1",
-          date: "2024-09-20",
-          temperature: 38.5,
-          bloodPressure: "120/80",
-          pulse: 85,
-          weight: 68
-        }
-      ]
-    }
 
-    setTimeout(() => {
-      setPatientHistory(mockHistory)
+    try {
+      const response = await fetch(`/api/physician/patients/${patientId}/history`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setPatientHistory(data)
+      } else {
+        console.error("Failed to load patient history:", data.error)
+        setPatientHistory({
+          consultations: [],
+          prescriptions: [],
+          vitalSigns: []
+        })
+      }
+    } catch (error) {
+      console.error("Failed to load patient history:", error)
+      setPatientHistory({
+        consultations: [],
+        prescriptions: [],
+        vitalSigns: []
+      })
+    } finally {
       setIsLoadingHistory(false)
-    }, 300)
+    }
   }
 
   const handlePatientSelect = (patient: Patient) => {
@@ -213,10 +145,32 @@ export default function PatientSearchPage() {
     }
   }
 
-  const handleAddToQueue = () => {
-    if (selectedPatient) {
-      // Mock add to queue - replace with actual API call
-      alert(`${selectedPatient.firstName} ${selectedPatient.lastName} added to queue`)
+  const handleAddToQueue = async () => {
+    if (!selectedPatient) return
+    
+    try {
+      const response = await fetch('/api/physician/queue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: selectedPatient.id,
+          priority: 'normal',
+          notes: 'Added from patient search'
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        alert(`${selectedPatient.firstName} ${selectedPatient.lastName} added to queue`)
+      } else {
+        alert(`Failed to add patient to queue: ${data.error}`)
+      }
+    } catch (error) {
+      console.error("Failed to add patient to queue:", error)
+      alert("Failed to add patient to queue")
     }
   }
 
